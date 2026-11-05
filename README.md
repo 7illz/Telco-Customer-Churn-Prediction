@@ -1,103 +1,219 @@
-# Telco Customer Churn Analysis — Power BI and Machine Learning
+# Telco Customer Churn Analysis
 
-An employer-facing analytics portfolio project that combines an interactive Power BI dashboard with a Python machine-learning notebook. It analyzes 7,043 telecom customers, highlights which groups are most likely to churn, and demonstrates both business intelligence and predictive-analysis skills.
+An end-to-end customer churn portfolio project combining an interactive Power BI dashboard,
+data-quality controls, and a Python machine-learning notebook. The project analyzes 7,043
+telecommunications customers to identify high-risk segments, quantify monthly revenue at
+risk, and translate the findings into practical retention actions.
 
-**Repository:** [7illz/Telco-Customer-Churn-Prediction](https://github.com/7illz/Telco-Customer-Churn-Prediction)
+[View the exported dashboard (PDF)](deliverables/Telco%20Churn%20Dashboard.pdf)
 
 ![Telco Customer Churn dashboard](deliverables/dashboard-overview.png)
 
-## Project scope
+## Business objective
 
-- **Power BI:** An interactive two-page management dashboard covering churn KPIs, customer segments, tenure, contracts, service and payment behavior, revenue at risk, and data quality.
-- **Machine learning:** A Python notebook comparing Logistic Regression, K-Nearest Neighbors, and an Artificial Neural Network. The notebook's evaluation identifies Logistic Regression as the strongest tested model, with 80.52% test accuracy.
+Customer churn directly affects recurring revenue and acquisition costs. This project helps a
+manager answer four questions:
 
-## Dashboard summary
+- How many customers are leaving, and how much monthly revenue is at risk?
+- Which contract, tenure, payment, and service segments have the highest churn rates?
+- Where should retention activity be prioritized?
+- Can the underlying data be trusted for decision-making?
 
-The report contains two pages:
+## Key results
 
-1. **Churn Overview** — KPI cards, interactive slicers, segment comparisons, contract and tenure analysis, payment and internet-service breakdowns, and a monthly-charge-versus-tenure scatter plot.
-2. **Data Quality** — row-count, null, duplicate-ID, and `TotalCharges` reconciliation checks.
+| Finding | Result | Business interpretation |
+| --- | ---: | --- |
+| Overall churn | 26.5% (1,869 of 7,043 customers) | More than one in four customers in the dataset churned. |
+| Monthly revenue at risk | $139,130.85 | This is the sum of monthly charges for churned customers, not an annual forecast. |
+| Month-to-month churn | 42.7% | Contract flexibility is strongly associated with higher churn. |
+| First-year churn | 47.4% for 0-12 months tenure | The earliest stage of the customer lifecycle is the highest-risk period. |
+| Electronic-check churn | 45.3% | This payment segment has the highest observed churn rate. |
+| Fiber-optic churn | 41.9% | Fiber-optic customers show the highest churn among internet-service groups. |
 
-The main page supports filtering by contract, internet service, tenure band, and senior-citizen status. Tooltips on the rate charts show the supporting customer and churn counts.
+These are descriptive associations within this dataset. They do not establish causation.
 
-## Verified findings
+## Dashboard design
 
-- Overall churn is **26.5%**: 1,869 of 7,043 customers. Churned customers represent **$139,130.85** in monthly revenue at risk.
-- Month-to-month customers have a **42.7%** churn rate, compared with **11.3%** for one-year and **2.8%** for two-year contracts.
-- Churn falls from **47.4%** among customers with 0–12 months of tenure to **9.5%** among customers with 49–72 months.
-- Electronic-check customers have the highest payment-method churn rate at **45.3%**, while fiber-optic customers have the highest internet-service churn rate at **41.9%**.
+### 1. Churn Overview
 
-These findings are descriptive associations in this dataset; they do not by themselves establish causation.
+The management page includes:
+
+- KPI cards for total customers, churn rate, monthly revenue at risk, and average tenure
+- churn rate by contract type and tenure band
+- churn analysis by internet service and payment method
+- customer-segment comparisons for senior citizens, partners, and dependents
+- monthly charges versus tenure scatter plot, colored by churn status
+- slicers for contract, internet service, tenure band, and senior-citizen status
+- tooltips showing the customer and churn counts behind each rate
+
+### 2. Data Quality
+
+The validation page checks row counts, required fields, duplicate customer IDs, and the
+`TotalCharges` correction. All documented checks currently return `PASS`.
+
+![Data Quality dashboard](deliverables/data-quality.png)
 
 ## Data preparation
 
 Power Query performs the following transformations:
 
-- Sets text, whole-number, currency, and decimal data types.
-- Converts the 11 blank `TotalCharges` values to zero only when `tenure = 0`. These records are new customers with no completed billing period, so zero preserves the valid rows without inventing accumulated revenue.
-- Converts `SeniorCitizen` from `0/1` to `No/Yes`.
-- Adds `Churn Flag` (`1` for churn and `0` for retained).
-- Adds tenure bands: `0-12`, `13-24`, `25-48`, and `49-72` months.
-- Adds monthly-charge bands: `Low` below $35, `Medium` from $35 to below $70, and `High` from $70 upward.
+1. Assigns appropriate text, whole-number, decimal, and currency data types.
+2. Converts the 11 blank `TotalCharges` values to zero only where `tenure = 0`.
+3. Converts `SeniorCitizen` from `0/1` to `No/Yes`.
+4. Adds a numeric `Churn Flag` where churn is `1` and retention is `0`.
+5. Creates tenure bands: `0-12`, `13-24`, `25-48`, and `49-72` months.
+6. Creates monthly-charge bands: `Low` below $35, `Medium` from $35 to below $70,
+   and `High` from $70 upward.
 
-The completed semantic model contains 17 measures, including Total Customers, Churned Customers, Churn Rate, average charges and tenure, Revenue at Risk, Churn Rate vs Overall, and data-quality controls.
+The `TotalCharges` choice preserves valid new-customer records without inventing accumulated
+revenue: all 11 blank values belong to customers with zero completed months of tenure.
 
-## Data-quality result
+The complete transformation script is available in
+[Telco Churn Power Query.m](Telco%20Churn%20Power%20Query.m).
 
-The quality checks return **PASS**:
+## Semantic model and DAX
 
-- 7,043 rows
-- 0 null customer IDs
-- 0 duplicate customer IDs
-- 0 null tenure values
-- 0 null monthly-charge values
-- 0 null `TotalCharges` values after correction
-- 0 null churn labels
-- 11 tenure-zero customers reconciled to 11 zero-`TotalCharges` records
+The Power BI semantic model contains 17 documented measures, including:
 
-![Data Quality page](deliverables/data-quality.png)
+- `Total Customers`
+- `Churned Customers`
+- `Churn Rate %`
+- `Avg Monthly Charges`
+- `Avg Tenure`
+- `Revenue at Risk`
+- `Churn Rate vs Overall`
+- data-quality and reconciliation measures
 
-## Project files
+Two central measures are:
 
-- `17_22241013__22241055 (2).ipynb` — Python machine-learning and deep-learning workflow
-- `Telco Churn Dashboard/Telco Churn Dashboard.pbip` — editable Power BI project entry point
-- `Telco Churn Dashboard/Telco Churn Dashboard.Report/` — report definition in PBIR format
-- `Telco Churn Dashboard/Telco Churn Dashboard.SemanticModel/` — semantic model and TMDL definitions
-- `deliverables/Telco Churn Dashboard.pdf` — exported two-page report
-- `deliverables/dashboard-overview.png` — portfolio screenshot
-- `deliverables/data-quality.png` — quality-page screenshot
-- `Telco-Customer-Churn.csv` — source dataset
-- `Telco Churn Power Query.m` — documented Power Query transformation script
+```DAX
+Churn Rate % =
+DIVIDE([Churned Customers], [Total Customers], 0)
+```
 
-To open the finished project on Windows, install Power BI Desktop and double-click `Telco Churn Dashboard.pbip`. If the CSV is moved, update the `Source` step in Power Query to its new path and select **Refresh**.
+```DAX
+Revenue at Risk =
+CALCULATE(
+    SUM('Telco Churn'[MonthlyCharges]),
+    KEEPFILTERS('Telco Churn'[Churn] = "Yes")
+)
+```
 
-## Suggested management actions
+The version-controlled model definition is in
+[Telco Churn.tmdl](Telco%20Churn%20Dashboard/Telco%20Churn%20Dashboard.SemanticModel/definition/tables/Telco%20Churn.tmdl).
 
-- Prioritize retention outreach during the first 12 months of the customer lifecycle.
-- Test incentives that move suitable month-to-month customers toward longer contracts.
-- Review onboarding, service expectations, and support experience for fiber-optic customers.
-- Test payment-method migration campaigns for electronic-check customers and measure the effect on churn and revenue at risk.
+## Data-quality results
 
-These actions should be evaluated through controlled pilots before broad rollout.
+| Check | Result |
+| --- | ---: |
+| Source rows | 7,043 |
+| Null customer IDs | 0 |
+| Duplicate customer IDs | 0 |
+| Null tenure values | 0 |
+| Null monthly charges | 0 |
+| Null `TotalCharges` after correction | 0 |
+| Null churn labels | 0 |
+| Tenure-zero customers | 11 |
+| Zero-`TotalCharges` customers after correction | 11 |
+| Overall data-quality status | PASS |
 
-## 30-second interview explanation
+## Machine-learning notebook
 
-> I built this Power BI dashboard from a 7,043-row telco churn dataset. In Power Query, I corrected the tenure-zero TotalCharges blanks, standardized the fields, and created customer segmentation bands. I then built DAX measures for customer counts, churn rate, average tenure, and monthly revenue at risk. The dashboard shows that churn is concentrated among month-to-month, early-tenure, electronic-check, and fiber-optic customers. I also added a data-quality page that reconciles the TotalCharges fix and checks key fields for missing or duplicate records.
+The included notebook explores churn prediction using:
 
-## Likely interview questions
+- Logistic Regression
+- K-Nearest Neighbors
+- an Artificial Neural Network
 
-**Why compare churn rates instead of only churned-customer counts?**
+Among the recorded notebook runs, Logistic Regression achieved the highest test accuracy at
+80.52%. This result is an experiment rather than a production deployment: the notebook does
+not include a pinned environment, model registry, drift monitoring, or a live scoring service.
+Accuracy should also be considered alongside class-specific precision, recall, and the
+business cost of false negatives.
 
-Rates normalize for segment size. A large segment can have many churned customers but a moderate risk level, while a smaller segment may have fewer churners but a much higher probability of churn.
+Open [17_22241013__22241055 (2).ipynb](17_22241013__22241055%20%282%29.ipynb) to review the
+data exploration, preprocessing, training, and evaluation workflow.
 
-**Why replace the blank `TotalCharges` values with zero?**
+## Repository structure
 
-Every blank belongs to a customer with zero months of tenure. Zero therefore represents no accumulated billing history, keeps valid new-customer records in the model, and is confirmed by the 11-to-11 reconciliation on the Data Quality page.
+```text
+.
+|-- Telco Churn Dashboard/
+|   |-- Telco Churn Dashboard.pbip       # Power BI project entry point
+|   |-- Telco Churn Dashboard.Report/    # Version-controlled report definition
+|   `-- Telco Churn Dashboard.SemanticModel/
+|                                           # TMDL semantic model
+|-- deliverables/
+|   |-- dashboard-overview.png
+|   |-- data-quality.png
+|   `-- Telco Churn Dashboard.pdf
+|-- Telco-Customer-Churn.csv              # Source dataset
+|-- Telco Churn Power Query.m             # Power Query transformation script
+|-- Part 2 Measures.tmdl                   # Core DAX measure definitions
+|-- Part 2 Validation.dax                  # DAX validation queries
+|-- 17_22241013__22241055 (2).ipynb       # Predictive-analysis notebook
+`-- README.md
+```
 
-**What action would you recommend first?**
+## Open the Power BI project
 
-I would pilot a first-year retention program for month-to-month customers, with targeted onboarding, contract-migration offers, and payment-method nudges. I would track incremental churn reduction and monthly revenue retained against a control group.
+Requirements:
 
-## GitHub presentation
+- Windows
+- a recent version of Power BI Desktop with Power BI Project (`.pbip`) support
 
-This repository includes the original predictive-modeling notebook and the completed Power BI portfolio extension. The dashboard screenshot renders directly in GitHub, while the PBIP source, semantic model, PDF, data-quality evidence, Power Query script, and DAX definitions make the work reviewable and reproducible.
+Steps:
+
+1. Clone or download this repository.
+2. Open
+   [Telco Churn Dashboard.pbip](Telco%20Churn%20Dashboard/Telco%20Churn%20Dashboard.pbip)
+   in Power BI Desktop.
+3. If Power BI cannot find the CSV, select **Home > Transform data > Data source settings**.
+4. Select the current CSV source, choose **Change Source**, and point it to
+   `Telco-Customer-Churn.csv` in the repository root.
+5. Select **Close & Apply**, then **Refresh**.
+
+The project includes both PBIR report definitions and TMDL semantic-model files, allowing the
+dashboard logic to be reviewed through Git instead of relying only on a binary `.pbix` file.
+
+## Recommended business actions
+
+1. Prioritize onboarding and retention outreach during the first 12 months.
+2. Test contract-migration incentives for eligible month-to-month customers.
+3. Investigate the fiber-optic customer experience, including service expectations and
+   support interactions.
+4. Test payment-method migration campaigns for electronic-check customers.
+5. Evaluate each intervention through a controlled pilot using incremental churn reduction
+   and monthly revenue retained as success measures.
+
+## Skills demonstrated
+
+- Power BI report design and interactive data visualization
+- Power Query data cleaning and transformation
+- DAX measure development and filter-context reasoning
+- data-quality validation and reconciliation
+- customer segmentation and business analysis
+- Python-based exploratory analysis and predictive modeling
+- version-controlled Power BI development with PBIP, PBIR, and TMDL
+
+## Project limitations
+
+- The analysis uses a static historical dataset and does not demonstrate causal effects.
+- Monthly revenue at risk is a descriptive monthly-charge total, not predicted lifetime value.
+- The notebook results have not been validated through cross-validation, deployment, or
+  production monitoring in this repository.
+- The Power Query source path may need to be updated after cloning the project.
+- Recommended actions should be tested before organization-wide implementation.
+
+## Interview summary
+
+> I built an end-to-end churn analysis using Power Query, DAX, Power BI, and Python. I cleaned
+> and validated 7,043 customer records, created an interactive management dashboard, and
+> quantified both churn risk and monthly revenue exposure. The analysis shows that churn is
+> concentrated among early-tenure, month-to-month, electronic-check, and fiber-optic customer
+> segments. I also added a dedicated data-quality page and kept the PBIP, PBIR, TMDL, Power
+> Query, and DAX assets version controlled so the work is transparent and reproducible.
+
+---
+
+Repository: [7illz/Telco-Customer-Churn-Prediction](https://github.com/7illz/Telco-Customer-Churn-Prediction)
