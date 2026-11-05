@@ -205,15 +205,6 @@ dashboard logic to be reviewed through Git instead of relying only on a binary `
 - The Power Query source path may need to be updated after cloning the project.
 - Recommended actions should be tested before organization-wide implementation.
 
-## Interview summary
-
-> I built an end-to-end churn analysis using Power Query, DAX, Power BI, and Python. I cleaned
-> and validated 7,043 customer records, created an interactive management dashboard, and
-> quantified both churn risk and monthly revenue exposure. The analysis shows that churn is
-> concentrated among early-tenure, month-to-month, electronic-check, and fiber-optic customer
-> segments. I also added a dedicated data-quality page and kept the PBIP, PBIR, TMDL, Power
-> Query, and DAX assets version controlled so the work is transparent and reproducible.
-
 ---
 
 Repository: [7illz/Telco-Customer-Churn-Prediction](https://github.com/7illz/Telco-Customer-Churn-Prediction)
