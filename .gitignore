@@ -1,0 +1,18 @@
+# Local validation tooling and Power BI cache files
+/tools/
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
+
+# Local diagnostic artifacts
+/*save-dialog*.png
+/current-screen.png
+/pbi-front.png
+/powerbi-window*.png
+/Telco Churn Dashboard/catalog/
+/Telco Churn Dashboard/churn-overview*.png
+/Telco Churn Dashboard/desktop-current.png
+/Telco Churn Dashboard/powerbi-issues.png
+/Telco Churn Dashboard/screenshots/
+
+# Preliminary Part 2-only PBIX; the completed report is the PBIP project folder
+/Telco Customer Churn.pbix

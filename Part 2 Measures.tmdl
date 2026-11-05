@@ -1,0 +1,46 @@
+createOrReplace
+
+	ref table 'Telco Churn'
+
+		/// Distinct count of customer identifiers in the current filter context.
+		measure 'Total Customers' = DISTINCTCOUNT('Telco Churn'[customerID])
+			formatString: #,0
+			displayFolder: Measures
+
+		/// Number of churned customer rows in the current filter context.
+		measure 'Churned Customers' = SUM('Telco Churn'[Churn Flag])
+			formatString: #,0
+			displayFolder: Measures
+
+		/// Churned customers divided by total customers in the current filter context.
+		measure 'Churn Rate %' = DIVIDE([Churned Customers], [Total Customers], 0)
+			formatString: 0.0%
+			displayFolder: Measures
+
+		/// Average monthly charge for customers in the current filter context.
+		measure 'Avg Monthly Charges' = AVERAGE('Telco Churn'[MonthlyCharges])
+			formatString: \$#,0.00
+			displayFolder: Measures
+
+		/// Average customer tenure in months in the current filter context.
+		measure 'Avg Tenure' = AVERAGE('Telco Churn'[tenure])
+			formatString: 0.0
+			displayFolder: Measures
+
+		/// Sum of monthly charges associated with churned customers in the current filter context.
+		measure 'Revenue at Risk' = CALCULATE(SUM('Telco Churn'[MonthlyCharges]), KEEPFILTERS('Telco Churn'[Churn] = "Yes"))
+			formatString: \$#,0.00
+			displayFolder: Measures
+
+		/// Current-context churn rate minus the unfiltered overall churn rate.
+		measure 'Churn Rate vs Overall' = ```
+				VAR OverallChurnRate =
+					CALCULATE(
+						[Churn Rate %],
+						REMOVEFILTERS('Telco Churn')
+					)
+				RETURN
+					[Churn Rate %] - OverallChurnRate
+				```
+			formatString: +0.0%;-0.0%;0.0%
+			displayFolder: Measures

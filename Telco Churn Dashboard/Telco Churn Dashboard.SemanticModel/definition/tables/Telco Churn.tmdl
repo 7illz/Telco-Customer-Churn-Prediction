@@ -1,0 +1,343 @@
+table 'Telco Churn'
+	lineageTag: b97ca4e0-f3e8-4a2f-9d67-40224988b742
+
+	/// Distinct count of customer identifiers in the current filter context.
+	measure 'Total Customers' = DISTINCTCOUNT('Telco Churn'[customerID])
+		formatString: #,0
+		displayFolder: Measures
+		lineageTag: 677f1bab-76cc-46ab-b287-d0d559701e68
+
+	/// Number of churned customer rows in the current filter context.
+	measure 'Churned Customers' = SUM('Telco Churn'[Churn Flag])
+		formatString: #,0
+		displayFolder: Measures
+		lineageTag: 56665dc0-49b1-4cb1-99e7-d3d518ef140d
+
+	/// Churned customers divided by total customers in the current filter context.
+	measure 'Churn Rate %' = DIVIDE([Churned Customers], [Total Customers], 0)
+		formatString: 0.0%
+		displayFolder: Measures
+		lineageTag: 930f010a-0976-4aa5-b33f-5a9bab64a40d
+
+	/// Average monthly charge for customers in the current filter context.
+	measure 'Avg Monthly Charges' = AVERAGE('Telco Churn'[MonthlyCharges])
+		formatString: \$#,0.00
+		displayFolder: Measures
+		lineageTag: 4c42a275-4d03-44fe-96bb-f7f1e51b3ceb
+
+	/// Average customer tenure in months in the current filter context.
+	measure 'Avg Tenure' = AVERAGE('Telco Churn'[tenure])
+		formatString: 0.0
+		displayFolder: Measures
+		lineageTag: 4c248973-4b86-4755-95d2-d36e01bbb5a9
+
+	/// Sum of monthly charges associated with churned customers in the current filter context.
+	measure 'Revenue at Risk' = CALCULATE(SUM('Telco Churn'[MonthlyCharges]), KEEPFILTERS('Telco Churn'[Churn] = "Yes"))
+		formatString: \$#,0.00
+		displayFolder: Measures
+		lineageTag: 47b6cb0c-d280-4c53-af8a-9cc1e37964ff
+
+	/// Current-context churn rate minus the unfiltered overall churn rate.
+	measure 'Churn Rate vs Overall' =
+			VAR OverallChurnRate =
+				CALCULATE(
+					[Churn Rate %],
+					REMOVEFILTERS('Telco Churn')
+				)
+			RETURN
+				[Churn Rate %] - OverallChurnRate
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Measures
+		lineageTag: 70a3743c-bb2d-4833-84ef-f866def78649
+
+	/// Source row count after Power Query transformations.
+	measure 'Data Rows' = COUNTROWS('Telco Churn')
+		formatString: #,0
+		displayFolder: Data Quality
+		lineageTag: d4e038f8-09e8-4d46-b5cd-c5887b6f7dc8
+
+	/// Blank customer identifiers after import.
+	measure 'Null Customer IDs' = COALESCE(COUNTBLANK('Telco Churn'[customerID]), 0)
+		formatString: #,0
+		displayFolder: Data Quality
+		lineageTag: 9c3d3265-dafc-4160-a56b-5a8c402ea977
+
+	/// Rows beyond the distinct customer identifier count.
+	measure 'Duplicate Customer IDs' = COUNTROWS('Telco Churn') - DISTINCTCOUNT('Telco Churn'[customerID])
+		formatString: #,0
+		displayFolder: Data Quality
+		lineageTag: 2a2d8bc8-a288-49a0-856e-87b50d816a57
+
+	/// Blank tenure values after import.
+	measure 'Null Tenure' = COALESCE(COUNTBLANK('Telco Churn'[tenure]), 0)
+		formatString: #,0
+		displayFolder: Data Quality
+		lineageTag: 4e55863a-1830-4789-89c9-af095a1e0c4a
+
+	/// Blank monthly charge values after import.
+	measure 'Null Monthly Charges' = COALESCE(COUNTBLANK('Telco Churn'[MonthlyCharges]), 0)
+		formatString: #,0
+		displayFolder: Data Quality
+		lineageTag: f7fd1f8b-8da0-4280-b087-7f5ba66e62f4
+
+	/// Blank TotalCharges values after the tenure-zero correction.
+	measure 'Null Total Charges' = COALESCE(COUNTBLANK('Telco Churn'[TotalCharges]), 0)
+		formatString: #,0
+		displayFolder: Data Quality
+		lineageTag: 4b1062c3-85cf-4b9e-9c5d-dd3b9988708a
+
+	/// Blank churn labels after import.
+	measure 'Null Churn' = COALESCE(COUNTBLANK('Telco Churn'[Churn]), 0)
+		formatString: #,0
+		displayFolder: Data Quality
+		lineageTag: f36b54dc-6010-4165-9471-c2ccd7d38232
+
+	/// Customers with zero completed months of service.
+	measure 'Tenure Zero Customers' = CALCULATE(COUNTROWS('Telco Churn'), KEEPFILTERS('Telco Churn'[tenure] = 0))
+		formatString: #,0
+		displayFolder: Data Quality
+		lineageTag: f699b90a-5238-43dc-9375-1d218c1ff501
+
+	/// Customers whose accumulated charges are zero after the correction.
+	measure 'Zero Total Charges' = CALCULATE(COUNTROWS('Telco Churn'), KEEPFILTERS('Telco Churn'[TotalCharges] = 0))
+		formatString: #,0
+		displayFolder: Data Quality
+		lineageTag: c9b875dc-85f7-429f-abb9-926f05f5b463
+
+	/// Overall status for the dashboard's documented quality checks.
+	measure 'Data Quality Status' =
+			VAR NullOrDuplicateIssues =
+				[Null Customer IDs]
+					+ [Duplicate Customer IDs]
+					+ [Null Tenure]
+					+ [Null Monthly Charges]
+					+ [Null Total Charges]
+					+ [Null Churn]
+			VAR TotalChargesFixMismatch =
+				ABS([Tenure Zero Customers] - [Zero Total Charges])
+			RETURN
+				IF(NullOrDuplicateIssues = 0 && TotalChargesFixMismatch = 0, "PASS", "REVIEW")
+		displayFolder: Data Quality
+		lineageTag: cdf2a304-8f23-4781-abe3-bb3e2063dd5a
+
+	column customerID
+		dataType: string
+		lineageTag: 73f3a626-6030-48af-a5dc-751fe9bc29ae
+		summarizeBy: none
+		sourceColumn: customerID
+
+	column gender
+		dataType: string
+		lineageTag: 5cb557c4-69b0-4908-91ef-ff059bd9895c
+		summarizeBy: none
+		sourceColumn: gender
+
+	column SeniorCitizen
+		dataType: string
+		lineageTag: d48cb90e-2b05-4b7b-a038-a920a054c961
+		summarizeBy: none
+		sourceColumn: SeniorCitizen
+
+	column Partner
+		dataType: string
+		lineageTag: 8ebd6c24-80f8-41db-a7d9-7188b8c11c26
+		summarizeBy: none
+		sourceColumn: Partner
+
+	column Dependents
+		dataType: string
+		lineageTag: fa5e3ef8-6b75-414f-9bff-e1af3c425bb1
+		summarizeBy: none
+		sourceColumn: Dependents
+
+	column tenure
+		dataType: int64
+		formatString: 0
+		lineageTag: 45340476-6c75-4cb6-ae4e-ace01de9a195
+		summarizeBy: none
+		sourceColumn: tenure
+
+	column 'Tenure Band'
+		dataType: string
+		lineageTag: 30eb9d07-63fd-4c57-a89d-a099c32cbaae
+		summarizeBy: none
+		sourceColumn: Tenure Band
+
+	column PhoneService
+		dataType: string
+		lineageTag: e2a48c3f-d18c-47ea-8b95-e7aec01cfb5b
+		summarizeBy: none
+		sourceColumn: PhoneService
+
+	column MultipleLines
+		dataType: string
+		lineageTag: 8cd249e9-5a1c-466a-b92b-6c854337e778
+		summarizeBy: none
+		sourceColumn: MultipleLines
+
+	column InternetService
+		dataType: string
+		lineageTag: 260f02a5-bb6e-4879-829d-e33430d2f491
+		summarizeBy: none
+		sourceColumn: InternetService
+
+	column OnlineSecurity
+		dataType: string
+		lineageTag: d6d6a8d8-f482-44bb-b3f1-4ef25467e27f
+		summarizeBy: none
+		sourceColumn: OnlineSecurity
+
+	column OnlineBackup
+		dataType: string
+		lineageTag: f9c06a51-867d-4321-876e-df125fc7dd17
+		summarizeBy: none
+		sourceColumn: OnlineBackup
+
+	column DeviceProtection
+		dataType: string
+		lineageTag: cb3fd16f-42d7-46cb-9291-fa6b277a8a52
+		summarizeBy: none
+		sourceColumn: DeviceProtection
+
+	column TechSupport
+		dataType: string
+		lineageTag: 976bbaae-cac7-4c79-be37-89613ca362c7
+		summarizeBy: none
+		sourceColumn: TechSupport
+
+	column StreamingTV
+		dataType: string
+		lineageTag: 1c5d599d-1f5f-4a38-95f6-6dc2bfded7a8
+		summarizeBy: none
+		sourceColumn: StreamingTV
+
+	column StreamingMovies
+		dataType: string
+		lineageTag: a3a1df30-b7ee-466b-867f-25461e0082a2
+		summarizeBy: none
+		sourceColumn: StreamingMovies
+
+	column Contract
+		dataType: string
+		lineageTag: c7afc59d-65d2-4935-affa-a91289c35a54
+		summarizeBy: none
+		sourceColumn: Contract
+
+	column PaperlessBilling
+		dataType: string
+		lineageTag: 679c00d4-76d9-4da6-bce9-58d06acf6d4c
+		summarizeBy: none
+		sourceColumn: PaperlessBilling
+
+	column PaymentMethod
+		dataType: string
+		lineageTag: bd17dfab-f69c-4aac-a492-08c52adaa862
+		summarizeBy: none
+		sourceColumn: PaymentMethod
+
+	column MonthlyCharges
+		dataType: decimal
+		formatString: \$#,0.00
+		lineageTag: 12075dd1-25c3-454c-a1a8-9134ff10607e
+		summarizeBy: none
+		sourceColumn: MonthlyCharges
+
+	column 'Monthly Charge Band'
+		dataType: string
+		lineageTag: 7a460c78-bd34-41a0-8f81-be3dd16df493
+		summarizeBy: none
+		sourceColumn: Monthly Charge Band
+
+	column TotalCharges
+		dataType: decimal
+		formatString: \$#,0.00
+		lineageTag: 2a3c8fdf-c72f-4bae-b1cc-5811013bb580
+		summarizeBy: sum
+		sourceColumn: TotalCharges
+
+	column Churn
+		dataType: string
+		lineageTag: 20c77ee3-5b85-461c-a89d-e25de18b621e
+		summarizeBy: none
+		sourceColumn: Churn
+
+	column 'Churn Flag'
+		dataType: int64
+		formatString: 0
+		lineageTag: 6023925f-4e1d-4548-a3af-acdfe351e4ee
+		summarizeBy: sum
+		sourceColumn: Churn Flag
+
+	partition 'Telco Churn' = m
+		mode: import
+		source =
+				let
+					Source = Csv.Document(
+						File.Contents("D:\\PROJECTS\\Telco-Customer-Churn-PowerBI\\Telco-Customer-Churn.csv"),
+						[Delimiter = ",", Columns = 21, Encoding = 65001, QuoteStyle = QuoteStyle.Csv]
+					),
+					#"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+					#"Set Source Types" = Table.TransformColumnTypes(
+						#"Promoted Headers",
+						{
+							{"customerID", type text}, {"gender", type text},
+							{"SeniorCitizen", Int64.Type}, {"Partner", type text},
+							{"Dependents", type text}, {"tenure", Int64.Type},
+							{"PhoneService", type text}, {"MultipleLines", type text},
+							{"InternetService", type text}, {"OnlineSecurity", type text},
+							{"OnlineBackup", type text}, {"DeviceProtection", type text},
+							{"TechSupport", type text}, {"StreamingTV", type text},
+							{"StreamingMovies", type text}, {"Contract", type text},
+							{"PaperlessBilling", type text}, {"PaymentMethod", type text},
+							{"MonthlyCharges", Currency.Type}, {"TotalCharges", type text},
+							{"Churn", type text}
+						},
+						"en-US"
+					),
+					#"Added Clean TotalCharges" = Table.AddColumn(
+						#"Set Source Types", "TotalCharges Clean",
+						each if [tenure] = 0 and ([TotalCharges] = null or Text.Trim([TotalCharges]) = "")
+							then 0
+							else Number.FromText(Text.Trim([TotalCharges]), "en-US"),
+						Currency.Type
+					),
+					#"Removed Raw TotalCharges" = Table.RemoveColumns(#"Added Clean TotalCharges", {"TotalCharges"}),
+					#"Renamed Clean TotalCharges" = Table.RenameColumns(#"Removed Raw TotalCharges", {{"TotalCharges Clean", "TotalCharges"}}),
+					#"Changed SeniorCitizen Labels" = Table.TransformColumns(
+						#"Renamed Clean TotalCharges",
+						{{"SeniorCitizen", each if _ = 0 then "No" else if _ = 1 then "Yes" else null, type text}}
+					),
+					#"Added Churn Flag" = Table.AddColumn(
+						#"Changed SeniorCitizen Labels", "Churn Flag",
+						each if [Churn] = "Yes" then 1 else if [Churn] = "No" then 0 else null,
+						Int64.Type
+					),
+					#"Added Tenure Band" = Table.AddColumn(
+						#"Added Churn Flag", "Tenure Band",
+						each if [tenure] < 0 or [tenure] > 72 then "Out of range"
+							else if [tenure] <= 12 then "0-12"
+							else if [tenure] <= 24 then "13-24"
+							else if [tenure] <= 48 then "25-48"
+							else "49-72",
+						type text
+					),
+					#"Added Monthly Charge Band" = Table.AddColumn(
+						#"Added Tenure Band", "Monthly Charge Band",
+						each if [MonthlyCharges] = null then null
+							else if [MonthlyCharges] < 35 then "Low"
+							else if [MonthlyCharges] < 70 then "Medium"
+							else "High",
+						type text
+					),
+					#"Reordered Columns" = Table.ReorderColumns(
+						#"Added Monthly Charge Band",
+						{
+							"customerID", "gender", "SeniorCitizen", "Partner", "Dependents", "tenure",
+							"Tenure Band", "PhoneService", "MultipleLines", "InternetService", "OnlineSecurity",
+							"OnlineBackup", "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies",
+							"Contract", "PaperlessBilling", "PaymentMethod", "MonthlyCharges",
+							"Monthly Charge Band", "TotalCharges", "Churn", "Churn Flag"
+						}
+					)
+				in
+					#"Reordered Columns"

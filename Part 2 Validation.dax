@@ -1,0 +1,10 @@
+EVALUATE
+ROW(
+    "Total Customers", [Total Customers],
+    "Churned Customers", [Churned Customers],
+    "Churn Rate %", [Churn Rate %],
+    "Avg Monthly Charges", [Avg Monthly Charges],
+    "Avg Tenure", [Avg Tenure],
+    "Revenue at Risk", [Revenue at Risk],
+    "Churn Rate vs Overall", [Churn Rate vs Overall]
+)
